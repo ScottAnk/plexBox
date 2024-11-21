@@ -1,0 +1,20 @@
+curl to get key:
+  curl https://api.nordvpn.com/v1/users/services/credentials -H 'Authorization:token:$NORD_TOKEN'
+  {
+    "id":150703,
+    "created_at":"2017-11-19 00:43:40",
+    "updated_at":"2017-11-19 00:43:40",
+    "username":"---",
+    "password":"---",
+    "nordlynx_private_key":"---"
+  }
+
+test gluetun login:
+  sudo docker -D run -it --rm --cap-add=NET_ADMIN --device /dev/net/tun \
+--env VPN_SERVICE_PROVIDER=nordvpn \
+--env VPN_TYPE=wireguard \
+--env WIREGUARD_PRIVATE_KEY=$WIREGUARD_PRIVATE_KEY \
+--env SERVER_COUNTRIES='United States' qmcgaw/gluetun
+
+test gluetun running:
+  sudo docker run --rm --network=container:gluetun alpine:3.20 sh -c "apk add wget && wget -qO- https://ipinfo.io"
