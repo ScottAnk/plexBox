@@ -15,19 +15,19 @@ services:
     ports:
       - 6881:6881
       - 6881:6881/udp
+      # - 9117:9117 # Jackett
       - 8085:8085 # qbittorrent
-      - 9117:9117 # Jackett
       - 8989:8989 # Sonarr
       - 9696:9696 # Prowlarr
+      - 7878:7878 # Radarr
     volumes:
-      - /home/ubuntu/docker/arr-stack/gluetun:/gluetun
+      - /media/default/storage/docker/arr-stack/gluetun:/gluetun
     environment:
       # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
       - VPN_SERVICE_PROVIDER=nordvpn
       - VPN_TYPE=wireguard
-      # OpenVPN:
-      # - OPENVPN_USER=
-      # - OPENVPN_PASSWORD=
+      - COUNTRY=Sweden,Netherlands,Norway,Switzerland
+      - SERVER_CATEGORIES=P2P
       # Wireguard:
       - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY} # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/nordvpn.md#obtain-your-wireguard-private-key
       - WIREGUARD_ADDRESSES=10.5.0.2/32
@@ -36,6 +36,9 @@ services:
       # Server list updater
       # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-the-vpn-servers-list
       - UPDATER_PERIOD=24h
+      - PUID=1000
+      - PGID=1000
+
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
@@ -47,26 +50,26 @@ services:
       - TZ=Europe/London
       - WEBUI_PORT=8085
     volumes:
-      - /home/ubuntu/docker/arr-stack/qbittorrent:/config
-      - /home/ubuntu/docker/arr-stack/qbittorrent/downloads:/downloads
+      - /media/default/storage/docker/arr-stack/qbittorrent:/config
+      - /media/default/storage/downloads:/downloads
     depends_on:
       - gluetun
     restart: always
 
-  jackett:
-    image: lscr.io/linuxserver/jackett:latest
-    container_name: jackett
-    network_mode: "service:gluetun"
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-      - AUTO_UPDATE=true #optional
-      - RUN_OPTS= #optional
-    volumes:
-      - /home/ubuntu/docker/arr-stack/jackett/data:/config
-      - /home/ubuntu/docker/arr-stack/jackett/blackhole:/downloads
-    restart: unless-stopped
+  # jackett:
+  #   image: lscr.io/linuxserver/jackett:latest
+  #   container_name: jackett
+  #   network_mode: "service:gluetun"
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Etc/UTC
+  #     - AUTO_UPDATE=true #optional
+  #     - RUN_OPTS= #optional
+  #   volumes:
+  #     - /home/ubuntu/docker/arr-stack/jackett/data:/config
+  #     - /home/ubuntu/docker/arr-stack/jackett/blackhole:/downloads
+  #   restart: unless-stopped
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -77,9 +80,23 @@ services:
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /home/ubuntu/docker/arr-stack/sonarr/data:/config
-      - /home/ubuntu/docker/arr-stack/sonarr/tvseries:/tv #optional
-      - /home/ubuntu/docker/arr-stack/sonarr/downloadclient-downloads:/downloads #optional
+      - /media/default/storage/docker/arr-stack/sonarr/data:/config
+      - /media/default/storage/media/tvseries:/tv #optional
+      - /media/default/storage/downloads:/downloads #optional
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /media/default/storage/docker/arr-stack/radarr/data:/config
+      - /media/default/storage/media/movies:/movies #optional
+      - /media/default/storage/downloads:/downloads #optional
     restart: unless-stopped
 
   prowlarr:
@@ -91,5 +108,28 @@ services:
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /home/ubuntu/docker/arr-stack/prowlarr/data:/config
+      - /media/default/storage/docker/arr-stack/prowlarr/data:/config
     restart: unless-stopped
+
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      # - PLEX_CLAIM= #optional
+      - TZ=Etc/UTC
+      - VERSION=docker
+      #commenting out nvidia for amd integrated env
+      # - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - /media/default/storage/docker/arr-stack/plex_config:/config
+      #temporary aim plex at completed folder j
+      # - "./dev_volumes/media:/Media"
+      - /media/default/storage/media/movies:/Movies
+      - /media/default/storage/media/tvseries:/TV
+      - "/dev/dri:/dev/dri"
+    restart: always
+    security_opt:
+      - no-new-privileges:true

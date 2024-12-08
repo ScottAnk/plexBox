@@ -1,7 +1,7 @@
 version: "3"
 services:
   gluetun:
-    image: qmcgaw/gluetun
+    image: qmcgaw/gluetun:latest
     container_name: gluetun
     # Hostname to use for container, required in some instances for the rest of the stack to each other endpoints
     hostname: gluetun
@@ -15,15 +15,17 @@ services:
       - 6881:6881
       - 6881:6881/udp
       - 8085:8085 # qbittorrent
-      - 9117:9117 # Jackett
+      # - 9117:9117 # Jackett
       - 8989:8989 # Sonarr
       - 9696:9696 # Prowlarr
+      - 8000:8000 # Security risk. strictly dev
     volumes:
-      - /home/ubuntu/docker/arr-stack/gluetun:/gluetun
+      - /media/default/storage/docker/arr-stack/gluetun:/gluetun
     environment:
       # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
       - VPN_SERVICE_PROVIDER=nordvpn
       - VPN_TYPE=wireguard
+      - COUNTRY=Sweden,Netherlands,Norway,Switzerland
       # OpenVPN:
       # - OPENVPN_USER=
       # - OPENVPN_PASSWORD=
