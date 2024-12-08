@@ -125,11 +125,16 @@ services:
       # - NVIDIA_VISIBLE_DEVICES=all
     volumes:
       - /media/default/storage/docker/arr-stack/plex_config:/config
-      #temporary aim plex at completed folder j
-      # - "./dev_volumes/media:/Media"
       - /media/default/storage/media/movies:/Movies
       - /media/default/storage/media/tvseries:/TV
       - "/dev/dri:/dev/dri"
     restart: always
     security_opt:
       - no-new-privileges:true
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: amd
+    #           count: all
+    #           capabilities: [gpu]
