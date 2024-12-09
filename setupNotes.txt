@@ -39,3 +39,22 @@ sudo apt-get update
 #install docker
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
+
+docker-compose needs env values. easiest with .env like this:
+```
+#note no trailing slash on root path
+MOUNT_ROOT=/path/to/container/storage
+WIREGUARD_PRIVATE_KEY=<vpn key>
+NORD_TOKEN=<vpn token>
+
+#only needed for .env.dev file to avoid name conflicts
+COMPOSE_PROJECT_NAME=dev-stack
+DEV_PREFIX=dev-
+#only needed for .env.dev file to avoid port conflicts
+ALT_P2P_IN=16881
+ALT_QB=18085
+ALT_SONARR=18989
+ALT_PROWLARR=19696
+ALT_RADARR=17878
+ALT_FLARE=18191
+```
