@@ -20,7 +20,7 @@ services:
       - "${ALT_SONARR:-8989}:8989" # Sonarr
       - "${ALT_PROWLARR:-9696}:9696" # Prowlarr
       - "${ALT_RADARR:-7878}:7878" # Radarr
-      - "${ALT_FLARE:-8191:8191}" # Flaresolver
+      # - "${ALT_FLARE:-8191:8191}" # Flaresolver
     volumes:
       - "${MOUNT_ROOT}/docker/arr-stack/gluetun:/gluetun"
     environment:
