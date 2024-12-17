@@ -25,13 +25,15 @@ services:
       - "${MOUNT_ROOT}/docker/arr-stack/gluetun:/gluetun"
     environment:
       # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
-      - VPN_SERVICE_PROVIDER=nordvpn
-      - VPN_TYPE=wireguard
-      - COUNTRY=Sweden,Netherlands,Norway,Switzerland
-      - SERVER_CATEGORIES=P2P
+      - VPN_SERVICE_PROVIDER=private internet access
+      - OPENVPN_USER=${PIA_USERNAME}
+      - OPENVPN_PASSWORD=${PIA_PASSWORD}
+      - SERVER_REGIONS=Netherlands,Norway,Switzerland
+
+      # - SERVER_CATEGORIES=P2P #only seems to work for nordVPN
       # Wireguard:
-      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY} # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/nordvpn.md#obtain-your-wireguard-private-key
-      - WIREGUARD_ADDRESSES=10.5.0.2/32
+      # - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY} # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/nordvpn.md#obtain-your-wireguard-private-key
+      # - WIREGUARD_ADDRESSES=10.5.0.2/32
       # Timezone for accurate log times
       - TZ=America/New_York
       # Server list updater
@@ -55,21 +57,6 @@ services:
     depends_on:
       - gluetun
     restart: always
-
-  # jackett:
-  #   image: lscr.io/linuxserver/jackett:latest
-  #   container_name: ${DEV_PREFIX}jackett
-  #   network_mode: "service:gluetun"
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=Etc/UTC
-  #     - AUTO_UPDATE=true #optional
-  #     - RUN_OPTS= #optional
-  #   volumes:
-  #     - /home/ubuntu/docker/arr-stack/jackett/data:/config
-  #     - /home/ubuntu/docker/arr-stack/jackett/blackhole:/downloads
-  #   restart: unless-stopped
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
