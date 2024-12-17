@@ -46,6 +46,7 @@ docker-compose needs env values. easiest with .env like this:
 MOUNT_ROOT=/path/to/container/storage
 WIREGUARD_PRIVATE_KEY=<vpn key>
 NORD_TOKEN=<vpn token>
+COMPOSE_PROFILES=run-plex #only intended for prod. Running plex in dev messes up the plex profile
 
 #only needed for .env.dev file to avoid name conflicts
 COMPOSE_PROJECT_NAME=dev-stack

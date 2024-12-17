@@ -3,7 +3,7 @@ version: "3"
 services:
   gluetun:
     image: qmcgaw/gluetun
-    container_name: gluetun
+    container_name: ${DEV_PREFIX}gluetun
     # Hostname to use for container, required in some instances for the rest of the stack to each other endpoints
     hostname: gluetun
     # line above must be uncommented to allow external containers to connect.
@@ -13,25 +13,27 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     ports:
-      - 6881:6881
-      - 6881:6881/udp
+      - "${ALT_P2P_IN:-6881}:6881" #qbittorrent P2P
+      - "${ALT_P2P_IN:-6881}:6881/udp" #qbittorrent P2P
       # - 9117:9117 # Jackett
-      - 8085:8085 # qbittorrent
-      - 8989:8989 # Sonarr
-      - 9696:9696 # Prowlarr
-      - 7878:7878 # Radarr
-      - 8191:8191 # Flaresolver
+      - "${ALT_QB:-8085}:${ALT_QB:-8085}" # qbittorrent webbUI
+      - "${ALT_SONARR:-8989}:8989" # Sonarr
+      - "${ALT_PROWLARR:-9696}:9696" # Prowlarr
+      - "${ALT_RADARR:-7878}:7878" # Radarr
+      - "${ALT_FLARE:-8191:8191}" # Flaresolver
     volumes:
-      - /media/default/storage/docker/arr-stack/gluetun:/gluetun
+      - "${MOUNT_ROOT}/docker/arr-stack/gluetun:/gluetun"
     environment:
       # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
-      - VPN_SERVICE_PROVIDER=nordvpn
-      - VPN_TYPE=wireguard
-      - COUNTRY=Sweden,Netherlands,Norway,Switzerland
-      - SERVER_CATEGORIES=P2P
+      - VPN_SERVICE_PROVIDER=private internet access
+      - OPENVPN_USER=${PIA_USERNAME}
+      - OPENVPN_PASSWORD=${PIA_PASSWORD}
+      - SERVER_REGIONS=Netherlands,Norway,Switzerland
+
+      # - SERVER_CATEGORIES=P2P #only seems to work for nordVPN
       # Wireguard:
-      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY} # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/nordvpn.md#obtain-your-wireguard-private-key
-      - WIREGUARD_ADDRESSES=10.5.0.2/32
+      # - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY} # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/providers/nordvpn.md#obtain-your-wireguard-private-key
+      # - WIREGUARD_ADDRESSES=10.5.0.2/32
       # Timezone for accurate log times
       - TZ=America/New_York
       # Server list updater
@@ -42,78 +44,63 @@ services:
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent
-    container_name: qbittorrent
+    container_name: ${DEV_PREFIX}qbittorrent
     network_mode: "service:gluetun"
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
-      - WEBUI_PORT=8085
+      - WEBUI_PORT=${ALT_QB:-8085}
     volumes:
-      - /media/default/storage/docker/arr-stack/qbittorrent:/config
-      - /media/default/storage/downloads:/downloads
+      - "${MOUNT_ROOT}/docker/arr-stack/qbittorrent:/config"
+      - "${MOUNT_ROOT}/downloads:/downloads"
     depends_on:
       - gluetun
     restart: always
 
-  # jackett:
-  #   image: lscr.io/linuxserver/jackett:latest
-  #   container_name: jackett
-  #   network_mode: "service:gluetun"
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=Etc/UTC
-  #     - AUTO_UPDATE=true #optional
-  #     - RUN_OPTS= #optional
-  #   volumes:
-  #     - /home/ubuntu/docker/arr-stack/jackett/data:/config
-  #     - /home/ubuntu/docker/arr-stack/jackett/blackhole:/downloads
-  #   restart: unless-stopped
-
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
-    container_name: sonarr
+    container_name: ${DEV_PREFIX}sonarr
     network_mode: "service:gluetun"
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /media/default/storage/docker/arr-stack/sonarr/data:/config
-      - /media/default/storage/media/tvseries:/tv #optional
-      - /media/default/storage/downloads:/downloads #optional
+      - "${MOUNT_ROOT}/docker/arr-stack/sonarr/data:/config"
+      - "${MOUNT_ROOT}/media/tvseries:/tv" #optional
+      - "${MOUNT_ROOT}/downloads:/downloads" #optional
     restart: unless-stopped
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
+    container_name: ${DEV_PREFIX}radarr
     network_mode: "service:gluetun"
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /media/default/storage/docker/arr-stack/radarr/data:/config
-      - /media/default/storage/media/movies:/movies #optional
-      - /media/default/storage/downloads:/downloads #optional
+      - "${MOUNT_ROOT}/docker/arr-stack/radarr/data:/config"
+      - "${MOUNT_ROOT}/media/movies:/movies" #optional
+      - "${MOUNT_ROOT}/downloads:/downloads" #optional
     restart: unless-stopped
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
+    container_name: ${DEV_PREFIX}prowlarr
     network_mode: "service:gluetun"
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /media/default/storage/docker/arr-stack/prowlarr/data:/config
+      - "${MOUNT_ROOT}/docker/arr-stack/prowlarr/data:/config"
     restart: unless-stopped
 
   plex:
     image: lscr.io/linuxserver/plex:latest
-    container_name: plex
+    container_name: ${DEV_PREFIX}plex
     network_mode: host
     environment:
       - PUID=1000
@@ -124,13 +111,16 @@ services:
       #commenting out nvidia for amd integrated env
       # - NVIDIA_VISIBLE_DEVICES=all
     volumes:
-      - /media/default/storage/docker/arr-stack/plex_config:/config
-      - /media/default/storage/media/movies:/Movies
-      - /media/default/storage/media/tvseries:/TV
+      - "${MOUNT_ROOT}/docker/arr-stack/plex_config:/config"
+      - "${MOUNT_ROOT}/media/movies:/Movies"
+      - "${MOUNT_ROOT}/media/tvseries:/TV"
       - "/dev/dri:/dev/dri"
     restart: always
     security_opt:
       - no-new-privileges:true
+      #don't want plex in dev
+    profiles:
+      - run-plex
     # deploy:
     #   resources:
     #     reservations:
@@ -142,7 +132,7 @@ services:
   flaresolverr:
     # DockerHub mirror flaresolverr/flaresolverr:latest
     image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
+    container_name: ${DEV_PREFIX}flaresolverr
     network_mode: "service:gluetun"
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-info}
